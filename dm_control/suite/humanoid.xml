@@ -30,6 +30,14 @@
 
   <worldbody>
     <geom name="floor" type="plane" conaffinity="1" size="100 100 .2" material="grid"/>
+    <site name="goal1" rgba="1 0 0 0.5" type="sphere" size="0.2" pos="4 0 1.5"/>
+    <site name="goal2" rgba="0 1 0 0.5" type="sphere" size="0.2" pos="-4 0 1.5"/>
+    <site name="goal3" rgba="0 0 1 0.5" type="sphere" size="0.2" pos="8 0 1.5"/>
+    <site name="goal4" rgba="1 1 0 0.5" type="sphere" size="0.2" pos="-8 0 1.5"/>
+    <site name="goal5" rgba="0 1 1 1.0" type="sphere" size="0.2" pos="0 4 1.5"/>
+    <site name="goal6" rgba="1 0 1 1.0" type="sphere" size="0.2" pos="0 -4 1.5"/>
+    <site name="goal7" rgba="0 1 0 1.0" type="sphere" size="0.2" pos="0 8 1.5"/>
+    <site name="goal8" rgba="1 0 0 1.0" type="sphere" size="0.2" pos=" 0 -8 1.5"/>
     <body name="torso" pos="0 0 1.5" childclass="body">
       <light name="top" pos="0 0 2" mode="trackcom"/>
       <camera name="back" pos="-3 0 1" xyaxes="0 -1 0 1 0 2" mode="trackcom"/>
@@ -199,4 +207,3 @@
   </sensor>
 
 </mujoco>
-

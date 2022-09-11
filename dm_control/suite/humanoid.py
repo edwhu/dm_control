@@ -157,12 +157,12 @@ class Humanoid(base.Task):
 
     """
     # Find a collision-free random initial configuration.
-    penetrating = True
-    while penetrating:
-      randomizers.randomize_limited_and_rotational_joints(physics, self.random)
-      # Check for collisions.
-      physics.after_reset()
-      penetrating = physics.data.ncon > 0
+    # penetrating = True
+    # while penetrating:
+    #   randomizers.randomize_limited_and_rotational_joints(physics, self.random)
+    #   # Check for collisions.
+    #   physics.after_reset()
+    #   penetrating = physics.data.ncon > 0
     super().initialize_episode(physics)
 
   def get_observation(self, physics):

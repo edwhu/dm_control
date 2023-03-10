@@ -5,7 +5,7 @@ Learning environments, using MuJoCo physics.
 
 An **introductory tutorial** for this package is available as a Colaboratory
 notebook:
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/deepmind/dm_control/blob/master/tutorial.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/deepmind/dm_control/blob/main/tutorial.ipynb)
 
 ## Overview
 
@@ -32,72 +32,58 @@ complex control tasks:
 
 -   [`dm_control.locomotion.soccer`]: Multi-agent soccer tasks.
 
-If you use this package, please cite our accompanying [tech report]:
+If you use this package, please cite our accompanying [publication]:
 
 ```
-@misc{tassa2020dmcontrol,
-    title={dm_control: Software and Tasks for Continuous Control},
-    author={Yuval Tassa and Saran Tunyasuvunakool and Alistair Muldal and
-            Yotam Doron and Siqi Liu and Steven Bohez and Josh Merel and
-            Tom Erez and Timothy Lillicrap and Nicolas Heess},
-    year={2020},
-    eprint={2006.12983},
-    archivePrefix={arXiv},
-    primaryClass={cs.RO}
+@article{tunyasuvunakool2020,
+         title = {dm_control: Software and tasks for continuous control},
+         journal = {Software Impacts},
+         volume = {6},
+         pages = {100022},
+         year = {2020},
+         issn = {2665-9638},
+         doi = {https://doi.org/10.1016/j.simpa.2020.100022},
+         url = {https://www.sciencedirect.com/science/article/pii/S2665963820300099},
+         author = {Saran Tunyasuvunakool and Alistair Muldal and Yotam Doron and
+                   Siqi Liu and Steven Bohez and Josh Merel and Tom Erez and
+                   Timothy Lillicrap and Nicolas Heess and Yuval Tassa},
 }
 ```
 
-## Requirements and Installation
+## Installation
 
-`dm_control` is regularly tested on Ubuntu 16.04 against the following Python
-versions:
+Install `dm_control` from PyPI by running
 
-*   3.6
-*   3.7
-*   3.8
-*   3.9
+```sh
+pip install dm_control
+```
 
-Various people have been successful in getting `dm_control` to work on other
-Linux distros, OS X, and Windows. We do not provide active support for these,
-but will endeavour to answer questions on a best-effort basis.
-
-Follow these steps to install `dm_control`:
-
-1.  Download MuJoCo Pro 2.00 from the download page on the [MuJoCo website].
-    MuJoCo Pro must be installed before `dm_control`, since `dm_control`'s
-    install script generates Python [`ctypes`] bindings based on MuJoCo's header
-    files. By default, `dm_control` assumes that the MuJoCo Zip archive is
-    extracted as `~/.mujoco/mujoco200_$PLATFORM` where `$PLATFORM` is either
-    `linux`, `win64`, or `macos`.
-
-2.  Install the `dm_control` Python package by running `pip install dm_control`.
-    We recommend `pip install`ing into a `virtualenv`, or with the `--user` flag
-    to avoid interfering with system packages. At installation time,
-    `dm_control` looks for the MuJoCo headers from Step 1 in
-    `~/.mujoco/mujoco200_$PLATFORM/include`, however this path can be configured
-    with the `headers-dir` command line argument.
-
-3.  Install a license key for MuJoCo, required by `dm_control` at runtime. See
-    the [MuJoCo license key page] for further details. By default, `dm_control`
-    looks for the MuJoCo license key file at `~/.mujoco/mjkey.txt`.
-
-4.  If the license key (e.g. `mjkey.txt`) or the shared library provided by
-    MuJoCo Pro (e.g. `libmujoco200.so` or `libmujoco200.dylib`) are installed at
-    non-default paths, specify their locations using the `MJKEY_PATH` and
-    `MJLIB_PATH` environment variables respectively. These environment variables
-    should be set to the full path to the relevant file itself, e.g.
-    `export MJLIB_PATH=/path/to/libmujoco200.so`.
+> **Note**: **`dm_control` cannot be installed in "editable" mode** (i.e. `pip
+> install -e`).
+>
+> While `dm_control` has been largely updated to use the pybind11-based bindings
+> provided via the `mujoco` package, at this time it still relies on some legacy
+> components that are automatically generated from MuJoCo header files in a way
+> that is incompatible with editable mode. Attempting to install `dm_control` in
+> editable mode will result in import errors like:
+>
+> ```
+> ImportError: cannot import name 'constants' from partially initialized module 'dm_control.mujoco.wrapper.mjbindings' ...
+> ```
+>
+> The solution is to `pip uninstall dm_control` and then reinstall it without
+> the `-e` flag.
 
 ## Versioning
 
-`dm_control` is released on a rolling basis: the latest commit on the `master`
-branch of our GitHub repository represents our latest release. Our Python
-package is versioned `0.0.N`, where `N` is the number that appears in the
-`PiperOrigin-RevId` field of the commit message. We always ensure that `N`
-strictly increases between a parent commit and its children. We do not upload
-all versions to PyPI, and occasionally the latest version on PyPI may lag behind
-the latest commit on GitHub. Should this happen, you can still install the
-newest version available by running `pip install
+Starting from version 1.0.0, we adopt semantic versioning.
+
+Prior to version 1.0.0, the `dm_control` Python package was versioned `0.0.N`,
+where `N` was an internal revision number that increased by an arbitrary amount
+at every single Git commit.
+
+If you want to install an unreleased version of `dm_control` directly from our
+repository, you can do so by running `pip install
 git+git://github.com/deepmind/dm_control.git`.
 
 ## Rendering
@@ -140,9 +126,9 @@ setting the environment variable `EGL_DEVICE_ID=` to the target GPU ID.
     `export DYLD_LIBRARY_PATH=$(brew --prefix)/lib:$DYLD_LIBRARY_PATH`.
 
 [EXT_platform_device]: https://www.khronos.org/registry/EGL/extensions/EXT/EGL_EXT_platform_device.txt
-[MuJoCo license key page]: https://www.roboti.us/license.html
-[MuJoCo website]: http://www.mujoco.org/
-[tech report]: https://arxiv.org/abs/2006.12983
+[Releases page on the MuJoCo GitHub repository]: https://github.com/deepmind/mujoco/releases
+[MuJoCo website]: https://mujoco.org/
+[publication]: https://doi.org/10.1016/j.simpa.2020.100022
 [`ctypes`]: https://docs.python.org/3/library/ctypes.html
 [`dm_control.mjcf`]: dm_control/mjcf/README.md
 [`dm_control.mujoco`]: dm_control/mujoco/README.md

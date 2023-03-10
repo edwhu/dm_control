@@ -23,18 +23,13 @@ import platform
 import subprocess
 import sys
 
+import mujoco
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.command import install
 from setuptools.command import test
 
-PLATFORM_SUFFIXES = {
-    'Linux': 'linux',
-    'Windows': 'win64',
-    'Darwin': 'macos',
-}
-DEFAULT_HEADERS_DIR = '~/.mujoco/mujoco200_{}/include'.format(
-    PLATFORM_SUFFIXES[platform.system()])
+PLATFORM = platform.system()
 
 # Relative paths to the binding generator script and the output directory.
 AUTOWRAP_PATH = 'dm_control/autowrap/autowrap.py'
@@ -47,6 +42,7 @@ HEADER_FILENAMES = [
     'mjdata.h',
     'mjmodel.h',
     'mjrender.h',
+    'mjtnum.h',
     'mjui.h',
     'mjvisualize.h',
     'mjxmacro.h',
@@ -58,7 +54,7 @@ def _initialize_mjbindings_options(cmd_instance):
   """Set default values for options relating to `build_mjbindings`."""
   # A default value must be assigned to each user option here.
   cmd_instance.inplace = 0
-  cmd_instance.headers_dir = DEFAULT_HEADERS_DIR
+  cmd_instance.headers_dir = mujoco.HEADERS_DIR
 
 
 def _finalize_mjbindings_options(cmd_instance):
@@ -177,34 +173,51 @@ def find_data_files(package_dir, patterns, excludes=()):
 
 setup(
     name='dm_control',
-    version='0.0.387317115',
+    version='1.0.5',
     description='Continuous control environments and MuJoCo Python bindings.',
+    long_description="""
+# `dm_control`: DeepMind Infrastructure for Physics-Based Simulation.
+
+DeepMind's software stack for physics-based simulation and Reinforcement
+Learning environments, using MuJoCo physics.
+
+An **introductory tutorial** for this package is available as a Colaboratory
+notebook: [Open In Google Colab](https://colab.research.google.com/github/deepmind/dm_control/blob/main/tutorial.ipynb).
+""",
+    long_description_content_type='text/markdown',
     author='DeepMind',
-    license='Apache License, Version 2.0',
+    author_email='mujoco@deepmind.com',
+    url='https://github.com/deepmind/dm_control',
+    license='Apache License 2.0',
+    classifiers=[
+        'License :: OSI Approved :: Apache Software License',
+    ],
     keywords='machine learning control physics MuJoCo AI',
-    python_requires='>=3.6, <3.10',
+    python_requires='>=3.7',
     install_requires=[
         'absl-py>=0.7.0',
         'dm-env',
         'dm-tree != 0.1.2',
-        'future',
         'glfw',
-        'h5py',
         'labmaze',
         'lxml',
+        'mujoco >= 2.2.1',
         'numpy >= 1.9.0',
-        'protobuf >= 3.15.6',
+        'protobuf >= 3.20.1',
         'pyopengl >= 3.1.4',
-        'pyparsing',
+        'pyparsing < 3.0.0',
         'requests',
         'setuptools!=50.0.0',  # https://github.com/pypa/setuptools/issues/2350
         'scipy',
         'tqdm',
     ],
+    extras_require={
+        'HDF5': ['h5py'],
+    },
     tests_require=[
         'mock',
         'nose',
-        'pillow>=7.1.0',  # https://github.com/advisories/GHSA-8843-m7mw-mxqm
+        'pillow>=9.0.1',  # https://github.com/advisories/GHSA-8vj2-vxx3-667w
     ],
     test_suite='nose.collector',
     packages=find_packages(),
@@ -212,8 +225,10 @@ setup(
         'dm_control':
             find_data_files(
                 package_dir='dm_control',
-                patterns=['*.amc', '*.msh', '*.png', '*.skn', '*.stl', '*.xml',
-                          '*.textproto', '*.h5'],
+                patterns=[
+                    '*.amc', '*.msh', '*.png', '*.skn', '*.stl', '*.xml',
+                    '*.textproto', '*.h5'
+                ],
                 excludes=[
                     '*/dog_assets/extras/*',
                     '*/kinova/meshes/*',  # Exclude non-decimated meshes.

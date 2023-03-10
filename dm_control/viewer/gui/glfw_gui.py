@@ -118,7 +118,7 @@ class GlfwMouse(base.InputEventsProcessor):
           self._glfw_setup, context.window)
 
     self._scale = framebuffer_width * 1.0 / window_width
-    self._last_mouse_pos = np.zeros(2, np.int)
+    self._last_mouse_pos = np.zeros(2, int)
 
     self._double_clicks = {}
 
@@ -143,7 +143,7 @@ class GlfwMouse(base.InputEventsProcessor):
       y: Vertical position of mouse, in pixels.
     """
     del window
-    position = np.array([x, y], np.int) * self._scale
+    position = np.array([x, y], int) * self._scale
     delta = position - self._last_mouse_pos
     self._last_mouse_pos = position
     self.add_event(self.on_move, position, delta)
@@ -283,12 +283,21 @@ class GlfwWindow:
       tick_func: A callable, function to call every frame.
     """
     while not glfw.window_should_close(self._context.window):
-      pixels = tick_func()
-      with self._context.make_current() as ctx:
-        ctx.call(
-            self._update_gui_on_render_thread, self._context.window, pixels)
-      self._mouse.process_events()
-      self._keyboard.process_events()
+      self.update(tick_func)
+
+  def update(self, render_func):
+    """Updates the window and renders a new image.
+
+    Args:
+      render_func: A callable returning a 3D numpy array of bytes (np.uint8),
+        with dimensions (width, height, 3).
+    """
+    pixels = render_func()
+    with self._context.make_current() as ctx:
+      ctx.call(
+          self._update_gui_on_render_thread, self._context.window, pixels)
+    self._mouse.process_events()
+    self._keyboard.process_events()
 
   def _update_gui_on_render_thread(self, window, pixels):
     self._fullscreen_quad.render(pixels, self.shape)

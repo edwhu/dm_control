@@ -32,6 +32,8 @@ class Walker(base.Walker):
   """Legacy base class for Walker robots."""
 
   def _build(self, initializer=None):
+    self._end_effectors_pos_sensors = []
+    self._obs_on_other = {}
     try:
       self._initializers = tuple(initializer)
     except TypeError:
@@ -65,7 +67,8 @@ class Walker(base.Walker):
     """
     return 0.
 
-  @abc.abstractproperty
+  @property
+  @abc.abstractmethod
   def ground_contact_geoms(self):
     """Geoms in this walker that are expected to be in contact with the ground.
 
@@ -99,6 +102,10 @@ class Walker(base.Walker):
   @property
   def body_geom_ids(self):
     return self._body_geom_ids
+
+  @property
+  def obs_on_other(self):
+    return self._obs_on_other
 
   def end_effector_contacts(self, physics):
     """Collect the contacts with the end effectors.
@@ -146,11 +153,13 @@ class Walker(base.Walker):
                                                          contact.geom2), 0.))
     return contacts
 
-  @abc.abstractproperty
+  @property
+  @abc.abstractmethod
   def end_effectors(self):
     raise NotImplementedError
 
-  @abc.abstractproperty
+  @property
+  @abc.abstractmethod
   def egocentric_camera(self):
     raise NotImplementedError
 
@@ -193,6 +202,10 @@ class Walker(base.Walker):
     obs_to_mocap = [self.observable_joints.index(j) for j in self.mocap_joints]
     return obs_to_mocap
 
+  @property
+  def end_effectors_pos_sensors(self):
+    return self._end_effectors_pos_sensors
+
 
 class WalkerObservables(base.WalkerObservables):
   """Legacy base class for Walker obserables."""
@@ -208,11 +221,16 @@ class WalkerObservables(base.WalkerObservables):
   @composer.observable
   def end_effectors_pos(self):
     """Position of end effectors relative to torso, in the egocentric frame."""
+    self._entity.end_effectors_pos_sensors[:] = []
+    for effector in self._entity.end_effectors:
+      self._entity.end_effectors_pos_sensors.append(
+          self._entity.mjcf_model.sensor.add(
+              'framepos', name=effector.name + '_end_effector',
+              objtype=effector.tag, objname=effector,
+              reftype='body', refname=self._entity.root_body))
     def relative_pos_in_egocentric_frame(physics):
-      end_effector = physics.bind(self._entity.end_effectors).xpos
-      torso = physics.bind(self._entity.root_body).xpos
-      xmat = np.reshape(physics.bind(self._entity.root_body).xmat, (3, 3))
-      return np.reshape(np.dot(end_effector - torso, xmat), -1)
+      return np.reshape(
+          physics.bind(self._entity.end_effectors_pos_sensors).sensordata, -1)
     return observable.Generic(relative_pos_in_egocentric_frame)
 
   @composer.observable
@@ -241,7 +259,7 @@ class WalkerObservables(base.WalkerObservables):
         'sensordata',
         self._entity.mjcf_model.sensor.touch,
         corruptor=
-        lambda v, random_state: np.array(v > _TOUCH_THRESHOLD, dtype=np.float))
+        lambda v, random_state: np.array(v > _TOUCH_THRESHOLD, dtype=float))
 
   @composer.observable
   def sensors_rangefinder(self):

@@ -19,9 +19,8 @@ from dm_control.mujoco.wrapper import mjbindings
 from dm_control.viewer import renderer
 from dm_control.viewer import user_input
 from dm_control.viewer import util
+import mujoco
 
-constants = mjbindings.constants
-enums = mjbindings.enums
 functions = mjbindings.functions
 
 _NUM_GROUP_KEYS = 10
@@ -63,20 +62,24 @@ _NEXT_RENDERING_MODE = user_input.KEY_F6
 _PREV_LABELING_MODE = (user_input.KEY_F7, user_input.MOD_SHIFT)
 _NEXT_LABELING_MODE = user_input.KEY_F7
 _PRINT_CAMERA = user_input.KEY_F11
-_VISUALIZATION_FLAGS = user_input.Range(
-    [ord(functions.mjVISSTRING[i][2]) for i in
-     range(0, enums.mjtVisFlag.mjNVISFLAG)])
+_VISUALIZATION_FLAGS = user_input.Range([
+    ord(functions.mjVISSTRING[i][2])
+    for i in range(0, mujoco.mjtVisFlag.mjNVISFLAG)
+])
 _GEOM_GROUPS = user_input.Range(
-    [i + ord('0') for i in range(min(_NUM_GROUP_KEYS, constants.mjNGROUP))])
-_SITE_GROUPS = user_input.Range(
-    [(i + ord('0'), user_input.MOD_SHIFT) for i in
-     range(min(_NUM_GROUP_KEYS, constants.mjNGROUP))])
-_RENDERING_FLAGS = user_input.Range(
-    [ord(functions.mjRNDSTRING[i][2]) for i in
-     range(0, enums.mjtRndFlag.mjNRNDFLAG)])
+    [i + ord('0') for i in range(min(_NUM_GROUP_KEYS, mujoco.mjNGROUP))])
+_SITE_GROUPS = user_input.Range([
+    (i + ord('0'), user_input.MOD_SHIFT)
+    for i in range(min(_NUM_GROUP_KEYS, mujoco.mjNGROUP))
+])
+_RENDERING_FLAGS = user_input.Range([
+    ord(functions.mjRNDSTRING[i][2])
+    for i in range(0, mujoco.mjtRndFlag.mjNRNDFLAG)
+])
 
-_CAMERA_MOVEMENT_ACTIONS = [enums.mjtMouse.mjMOUSE_MOVE_V,
-                            enums.mjtMouse.mjMOUSE_ROTATE_H]
+_CAMERA_MOVEMENT_ACTIONS = [
+    mujoco.mjtMouse.mjMOUSE_MOVE_V, mujoco.mjtMouse.mjMOUSE_ROTATE_H
+]
 
 # Translates mouse wheel rotations to zoom speed.
 _SCROLL_SPEED_FACTOR = 0.05
@@ -84,17 +87,23 @@ _SCROLL_SPEED_FACTOR = 0.05
 # Distance, in meters, at which to focus on the clicked object.
 _LOOK_AT_DISTANCE = 1.5
 
+# Zoom factor used when zooming in on the entire scene.
+_FULL_SCENE_ZOOM_FACTOR = 1.5
+
 
 class Viewer:
   """Viewport displaying the contents of a physics world."""
 
-  def __init__(self, viewport, mouse, keyboard):
+  def __init__(self, viewport, mouse, keyboard, camera_settings=None,
+               zoom_factor=_FULL_SCENE_ZOOM_FACTOR):
     """Instance initializer.
 
     Args:
       viewport: Render viewport, instance of renderer.Viewport.
       mouse: A mouse device.
       keyboard: A keyboard device.
+      camera_settings: Properties of the scene MjvCamera.
+      zoom_factor: Initial scale factor for zooming into the scene.
     """
     self._viewport = viewport
     self._mouse = mouse
@@ -104,11 +113,12 @@ class Viewer:
     self._input_map = user_input.InputMap(mouse, keyboard)
 
     self._camera = None
-    self._camera_settings = None
+    self._camera_settings = camera_settings
     self._renderer = None
     self._manipulator = None
     self._free_camera = None
     self._camera_select = None
+    self._zoom_factor = zoom_factor
 
   def __del__(self):
     del self._camera
@@ -127,7 +137,7 @@ class Viewer:
     """
     self._camera = renderer.SceneCamera(
         physics.model, physics.data, self._render_settings,
-        self._camera_settings)
+        settings=self._camera_settings, zoom_factor=self._zoom_factor)
 
     self._manipulator = ManipulationController(
         self._viewport, self._camera, self._mouse)
@@ -357,9 +367,9 @@ class FreeCameraController:
     """
     if self._active:
       if enable:
-        self._action.begin(enums.mjtMouse.mjMOUSE_MOVE_V)
+        self._action.begin(mujoco.mjtMouse.mjMOUSE_MOVE_V)
       else:
-        self._action.end(enums.mjtMouse.mjMOUSE_MOVE_V)
+        self._action.end(mujoco.mjtMouse.mjMOUSE_MOVE_V)
 
   def set_pan_horizontal_mode(self, enable):
     """Starts/ends the camera panning action along the horizontal plane.
@@ -369,9 +379,9 @@ class FreeCameraController:
     """
     if self._active:
       if enable:
-        self._action.begin(enums.mjtMouse.mjMOUSE_MOVE_H)
+        self._action.begin(mujoco.mjtMouse.mjMOUSE_MOVE_H)
       else:
-        self._action.end(enums.mjtMouse.mjMOUSE_MOVE_H)
+        self._action.end(mujoco.mjtMouse.mjMOUSE_MOVE_H)
 
   def set_rotate_mode(self, enable):
     """Starts/ends the camera rotation action.
@@ -381,9 +391,9 @@ class FreeCameraController:
     """
     if self._active:
       if enable:
-        self._action.begin(enums.mjtMouse.mjMOUSE_ROTATE_H)
+        self._action.begin(mujoco.mjtMouse.mjMOUSE_ROTATE_H)
       else:
-        self._action.end(enums.mjtMouse.mjMOUSE_ROTATE_H)
+        self._action.end(mujoco.mjtMouse.mjMOUSE_ROTATE_H)
 
   def center(self):
     """Focuses camera on the object the pointer is currently pointing at."""
@@ -409,7 +419,7 @@ class FreeCameraController:
     """
     if self._active:
       offset = [0, _SCROLL_SPEED_FACTOR * zoom_factor * -1.]
-      self._camera.move(enums.mjtMouse.mjMOUSE_ZOOM, offset)
+      self._camera.move(mujoco.mjtMouse.mjMOUSE_ZOOM, offset)
 
   def track(self):
     """Makes the camera track the currently selected object.
@@ -470,9 +480,9 @@ class ManipulationController:
       enable: A boolean flag, True begins the action, False ends it.
     """
     if enable:
-      self._action.begin(enums.mjtMouse.mjMOUSE_MOVE_V)
+      self._action.begin(mujoco.mjtMouse.mjMOUSE_MOVE_V)
     else:
-      self._action.end(enums.mjtMouse.mjMOUSE_MOVE_V)
+      self._action.end(mujoco.mjtMouse.mjMOUSE_MOVE_V)
 
   def set_move_horizontal_mode(self, enable):
     """Begins/ends an object translation action along the horizontal plane.
@@ -481,9 +491,9 @@ class ManipulationController:
       enable: A boolean flag, True begins the action, False ends it.
     """
     if enable:
-      self._action.begin(enums.mjtMouse.mjMOUSE_MOVE_H)
+      self._action.begin(mujoco.mjtMouse.mjMOUSE_MOVE_H)
     else:
-      self._action.end(enums.mjtMouse.mjMOUSE_MOVE_H)
+      self._action.end(mujoco.mjtMouse.mjMOUSE_MOVE_H)
 
   def set_rotate_mode(self, enable):
     """Begins/ends an object rotation action.
@@ -492,9 +502,9 @@ class ManipulationController:
       enable: A boolean flag, True begins the action, False ends it.
     """
     if enable:
-      self._action.begin(enums.mjtMouse.mjMOUSE_ROTATE_H)
+      self._action.begin(mujoco.mjtMouse.mjMOUSE_ROTATE_H)
     else:
-      self._action.end(enums.mjtMouse.mjMOUSE_ROTATE_H)
+      self._action.end(mujoco.mjtMouse.mjMOUSE_ROTATE_H)
 
   def _update_action(self, action):
     if self._perturb is not None:
